@@ -8,8 +8,7 @@ module.exports = {
     io.on('connection',function(socket){
 
       socket.on('subscribe', function(data) {
-        console.log(data);
-        if (data.apiKey == null || data.room == null) {
+        if (data.credentials.apiKey == null || data.credentials.prefix == null) {
           console.log('No credentials');
           socket.emit('unauthorized', {message: 'No credentials provided'}, function() {
             socket.disconnect();
@@ -18,7 +17,7 @@ module.exports = {
         }
 
         // verify the apiKey with the room
-        Mysql.record('authentication', {apiKey: data.apiKey, room: data.room})
+        Mysql.record('authentication', {apiKey: data.credentials.apiKey, prefix: data.credentials.prefix})
           .then(function(record){
             if (record.length == 0) {
               console.log('Wrong credentials');
@@ -26,8 +25,9 @@ module.exports = {
                 socket.disconnect();
               });
             } else {
-              socket.join(record[0].room);
-              io.sockets.in(record[0].room).emit('joined');
+              var authRoom = record[0].prefix + '::' + data.room;
+              socket.join(authRoom);
+              io.sockets.in(authRoom).emit('joined');
               socket.emit('authorized');
             }
           })
@@ -38,10 +38,6 @@ module.exports = {
             });
           });
       })
-
-      socket.on('error', function (err) {
-        console.log(err);
-      });
 
       socket.on('unsubscribe', function(room) {
         socket.leave(room);
