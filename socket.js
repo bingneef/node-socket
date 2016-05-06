@@ -1,3 +1,5 @@
+var Mysql = require('node-mysql-helper');
+
 module.exports = {
   socket: null,
   io: null,
@@ -5,10 +7,41 @@ module.exports = {
     this.io = io;
     io.on('connection',function(socket){
 
-      socket.on('subscribe', function(room) {
-        socket.join(room);
-        io.sockets.in(room).emit('joined');
+      socket.on('subscribe', function(data) {
+        console.log(data);
+        if (data.apiKey == null || data.room == null) {
+          console.log('No credentials');
+          socket.emit('unauthorized', {message: 'No credentials provided'}, function() {
+            socket.disconnect();
+          });
+          return
+        }
+
+        // verify the apiKey with the room
+        Mysql.record('authentication', {apiKey: data.apiKey, room: data.room})
+          .then(function(record){
+            if (record.length == 0) {
+              console.log('Wrong credentials');
+              socket.emit('unauthorized', {message: 'Invalid credentials'}, function() {
+                socket.disconnect();
+              });
+            } else {
+              socket.join(record[0].room);
+              io.sockets.in(record[0].room).emit('joined');
+              socket.emit('authorized');
+            }
+          })
+          .catch(function(err){
+            console.log(err);
+            socket.emit('unauthorized', {message: "Some error occured. I'm sorry."}, function() {
+              socket.disconnect();
+            });
+          });
       })
+
+      socket.on('error', function (err) {
+        console.log(err);
+      });
 
       socket.on('unsubscribe', function(room) {
         socket.leave(room);
@@ -18,14 +51,6 @@ module.exports = {
       socket.on('socketTransmit', function(data) {
         console.log('transmit', data);
         socket.broadcast.to(data.room).emit('socketTransmit', data);
-      });
-
-      socket.on('slaveTransmit', function(data) {
-        socket.broadcast.to(data.room).emit('slaveIncoming', data);
-      });
-
-      socket.on('masterTransmit', function(data) {
-        socket.broadcast.to(data.room).emit('masterIncoming', data);
       });
 
       console.log("A user is connected");

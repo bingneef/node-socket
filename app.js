@@ -12,6 +12,7 @@ var server = app.listen(8000);
 console.log('Socket available at port 8000');
 
 var io = require( "socket.io" )( server );
+var dbinfo = require('./dbinfo');
 var sockets = require('./socket');
 sockets.setupSockets(io);
 
