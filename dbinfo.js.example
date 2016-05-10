@@ -1,4 +1,4 @@
-var Mysql = require('node-mysql-helper');
+var Mysql = require('node-mysql-helper-fork');
 
 var mysqlOptions = {
   host: '127.0.0.1',

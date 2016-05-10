@@ -1,4 +1,4 @@
-var Mysql = require('node-mysql-helper');
+var Mysql = require('node-mysql-helper-fork');
 
 module.exports = {
   socket: null,
