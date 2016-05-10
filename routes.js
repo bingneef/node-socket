@@ -7,7 +7,6 @@ var randomstring = require("randomstring");
 
 /* GET home page. */
 router.post('/socketTransmit', function(req, res, next) {
-  console.log('transmit');
   socket.transmit(req.body);
   res.statusCode = 200;
   res.send('ok');
@@ -93,8 +92,6 @@ router.route('/api/v1/authentications/*')
           }
       })
       .catch(function(data) {
-        console.log(Mysql.getLastQuery());
-        console.log(data);
         res.statusCode = 500;
         res.send(data);
       });
